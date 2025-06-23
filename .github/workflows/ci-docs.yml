@@ -1,12 +1,8 @@
 name: "Run Docs CI"
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-  push:
-    branches:
-      - "**"
-      - "!gh-pages"
+  workflow_dispatch:
+
 
 env:
   UV_FROZEN: "1"

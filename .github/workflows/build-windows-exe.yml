@@ -12,7 +12,6 @@ on:
 jobs:
   build-windows:
     name: Build Windows Executable
-    # We must run on a Windows virtual machine to build a .exe
     runs-on: windows-latest
 
     steps:
@@ -22,32 +21,29 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          # The docling project specifies Python 3.10 or newer.
           python-version: '3.10'
 
       - name: Install Poetry
-        # This is a trusted and popular action for installing Poetry.
         uses: snok/install-poetry@v1
         with:
           version: 'latest'
 
+      - name: Configure Poetry
+        # This is a best practice for CI. It tells Poetry to create the virtual
+        # environment in a '.venv' folder within the project directory.
+        run: python -m poetry config virtualenvs.in-project true
+
       - name: Install project dependencies
-        run: poetry install --no-interaction
-        # --no-interaction is crucial for running in a non-interactive CI environment.
+        # CORRECTED: We call poetry as a python module to avoid PATH issues.
+        run: python -m poetry install --no-interaction
 
       - name: Build executable with PyInstaller
-        run: |
-          # 'poetry run' executes the command within the virtual environment managed by Poetry.
-          # --name: Sets the output filename (docling.exe).
-          # --onefile: Bundles everything into a single executable file.
-          # The entry point is 'docling/cli.py' as defined in the project's pyproject.toml.
-          poetry run pyinstaller --name docling --onefile docling/cli.py
+        # CORRECTED: We use 'python -m poetry run' to execute the pyinstaller command
+        # within the virtual environment managed by Poetry.
+        run: python -m poetry run pyinstaller --name docling --onefile docling/cli.py
 
       - name: Upload EXE as a workflow artifact
-        # This step makes the compiled .exe available for download.
         uses: actions/upload-artifact@v4
         with:
-          # This is the name of the downloadable file you will see.
           name: docling-windows-exe
-          # This is the path to the file that gets uploaded.
           path: dist/docling.exe

@@ -4,9 +4,6 @@ name: Build Windows EXE
 
 # This action triggers on every push to the 'main' branch.
 on:
-  push:
-    branches: [ main ]
-  # This also allows you to run the workflow manually from the Actions tab.
   workflow_dispatch:
 
 jobs:
@@ -23,24 +20,21 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v4
+
+      - name: Setup a local virtual environment (if no poetry.toml file)
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+      - uses: actions/cache@v3
+        name: Define a cache for the virtual environment based on the dependencies lock file
         with:
-          version: 'latest'
-
-      - name: Configure Poetry
-        # This is a best practice for CI. It tells Poetry to create the virtual
-        # environment in a '.venv' folder within the project directory.
-        run: python -m poetry config virtualenvs.in-project true
-
-      - name: Install project dependencies
-        # CORRECTED: We call poetry as a python module to avoid PATH issues.
-        run: python -m poetry install --no-interaction
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
 
       - name: Build executable with PyInstaller
-        # CORRECTED: We use 'python -m poetry run' to execute the pyinstaller command
-        # within the virtual environment managed by Poetry.
-        run: python -m poetry run pyinstaller --name docling --onefile docling/cli.py
+        run: poetry run pyinstaller --name docling --onefile docling/cli.py
 
       - name: Upload EXE as a workflow artifact
         uses: actions/upload-artifact@v4
